@@ -11,7 +11,7 @@ db.init_app(app)
 
 migrate = Migrate(app, db)
 
-from models import User
+from models import User, Task
 
 
 @app.route("/")
