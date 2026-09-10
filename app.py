@@ -1,5 +1,5 @@
 from flask_bcrypt import Bcrypt
-from flask_jwt_extended import JWTManager, create_access_token
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask import Flask, request
 from flask_migrate import Migrate
 from extensions import db
@@ -22,6 +22,7 @@ from models import User
 @app.route("/")
 def home():
     return {"message": "Secure Task API is running"}
+
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -61,6 +62,7 @@ def register():
         }
     }, 201
 
+
 @app.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
@@ -90,6 +92,18 @@ def login():
             "email": user.email
         }
     }, 200
+
+
+@app.route("/protected", methods=["GET"])
+@jwt_required()
+def protected():
+    user_id = get_jwt_identity()
+
+    return {
+        "message": "You are authenticated",
+        "user_id": user_id
+    }, 200
+
 
 if __name__ == "__main__":
     app.run(debug=True)
