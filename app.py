@@ -16,7 +16,7 @@ jwt = JWTManager(app)
 
 migrate = Migrate(app, db)
 
-from models import User
+from models import User, Task
 
 
 @app.route("/")
@@ -105,7 +105,6 @@ def protected():
     }, 200
 
 
-
-
 if __name__ == "__main__":
     app.run(debug=True)
+```
