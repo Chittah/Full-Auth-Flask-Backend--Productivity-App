@@ -1,5 +1,5 @@
 from flask_bcrypt import Bcrypt
-from flask_jwt_extended import JWTManager
+from flask_jwt_extended import JWTManager, create_access_token
 from flask import Flask, request
 from flask_migrate import Migrate
 from extensions import db
@@ -60,6 +60,36 @@ def register():
             "email": user.email
         }
     }, 201
+
+@app.route("/login", methods=["POST"])
+def login():
+    data = request.get_json()
+
+    email = data.get("email")
+    password = data.get("password")
+
+    if not email or not password:
+        return {"message": "Email and password are required"}, 400
+
+    user = User.query.filter_by(email=email).first()
+
+    if not user:
+        return {"message": "Invalid email or password"}, 401
+
+    if not bcrypt.check_password_hash(user.password_hash, password):
+        return {"message": "Invalid email or password"}, 401
+
+    access_token = create_access_token(identity=user.id)
+
+    return {
+        "message": "Login successful",
+        "access_token": access_token,
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email
+        }
+    }, 200
 
 if __name__ == "__main__":
     app.run(debug=True)
