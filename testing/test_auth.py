@@ -1,3 +1,4 @@
+
 def test_home(client):
     response = client.get("/")
 
@@ -10,7 +11,7 @@ def test_home(client):
 
 def test_signup(client):
     response = client.post(
-        "/signup",
+        "/register",
         json={
             "username": "testuser",
             "email": "test@example.com",
@@ -23,7 +24,7 @@ def test_signup(client):
 
 def test_login(client):
     client.post(
-        "/signup",
+        "/register",
         json={
             "username": "testuser",
             "email": "test@example.com",
@@ -44,7 +45,7 @@ def test_login(client):
 
 def test_invalid_login(client):
     client.post(
-        "/signup",
+        "/register",
         json={
             "username": "testuser",
             "email": "test@example.com",
