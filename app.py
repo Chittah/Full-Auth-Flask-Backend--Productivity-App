@@ -116,6 +116,12 @@ def get_tasks():
     current_user_id = get_jwt_identity()
     tasks = Task.query.filter_by(user_id=current_user_id).all()
     
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 5, type=int)
+    total = len(tasks)
+    start = (page - 1) * per_page
+    paged_tasks = tasks[start:start + per_page]
+    
     results = [
         {
             "id": task.id,
@@ -127,9 +133,15 @@ def get_tasks():
             "created_at": task.created_at.strftime("%Y-%m-%d %H:%M:%S") if hasattr(task, "created_at") and task.created_at else None,
             "user_id": task.user_id
         }
-        for task in tasks
+        for task in paged_tasks
     ]
-    return jsonify(results), 200
+    return jsonify({
+        "tasks": results,
+        "page": page,
+        "per_page": per_page,
+        "total": total,
+        "pages": (total + per_page - 1) // per_page
+    }), 200
 
 
 # Create a task
