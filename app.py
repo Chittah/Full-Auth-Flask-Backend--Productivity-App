@@ -4,6 +4,9 @@ from flask import Flask, request, jsonify
 from flask_migrate import Migrate
 from extensions import db
 from datetime import datetime
+from schemas import TaskSchema
+
+task_schema = TaskSchema()
 
 app = Flask(__name__)
 
@@ -135,6 +138,10 @@ def get_tasks():
 def create_task():
     current_user_id = get_jwt_identity()
     data = request.get_json() or {}
+    
+    errors = task_schema.validate(data)
+    if errors:
+        return {"errors": errors}, 400
 
     if not data.get("title"):
         return {"message": "Title is required"}, 400
@@ -200,6 +207,10 @@ def update_task(id):
         return {"message": "Task not found or access denied"}, 404
 
     data = request.get_json() or {}
+    
+    errors = task_schema.validate(data, partial=True)
+    if errors:
+        return {"errors": errors}, 400
 
     if "title" in data:
         task.title = data["title"]
