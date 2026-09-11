@@ -4,6 +4,9 @@ from flask import Flask, request, jsonify
 from flask_migrate import Migrate
 from extensions import db
 from datetime import datetime
+from schemas import TaskSchema
+
+task_schema = TaskSchema()
 
 app = Flask(__name__)
 
@@ -113,6 +116,12 @@ def get_tasks():
     current_user_id = get_jwt_identity()
     tasks = Task.query.filter_by(user_id=current_user_id).all()
     
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 5, type=int)
+    total = len(tasks)
+    start = (page - 1) * per_page
+    paged_tasks = tasks[start:start + per_page]
+    
     results = [
         {
             "id": task.id,
@@ -124,9 +133,15 @@ def get_tasks():
             "created_at": task.created_at.strftime("%Y-%m-%d %H:%M:%S") if hasattr(task, "created_at") and task.created_at else None,
             "user_id": task.user_id
         }
-        for task in tasks
+        for task in paged_tasks
     ]
-    return jsonify(results), 200
+    return jsonify({
+        "tasks": results,
+        "page": page,
+        "per_page": per_page,
+        "total": total,
+        "pages": (total + per_page - 1) // per_page
+    }), 200
 
 
 # Create a task
@@ -135,6 +150,10 @@ def get_tasks():
 def create_task():
     current_user_id = get_jwt_identity()
     data = request.get_json() or {}
+    
+    errors = task_schema.validate(data)
+    if errors:
+        return {"errors": errors}, 400
 
     if not data.get("title"):
         return {"message": "Title is required"}, 400
@@ -200,6 +219,10 @@ def update_task(id):
         return {"message": "Task not found or access denied"}, 404
 
     data = request.get_json() or {}
+    
+    errors = task_schema.validate(data, partial=True)
+    if errors:
+        return {"errors": errors}, 400
 
     if "title" in data:
         task.title = data["title"]
